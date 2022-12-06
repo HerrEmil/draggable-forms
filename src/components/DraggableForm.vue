@@ -18,16 +18,17 @@
           :group="`editor form ${formData.id}`"
           :disabled="!dragAndDropActive"
           direction="vertical"
+          :move="() => false"
           :sort="true"
-          :list="inputFieldSet.ids"
-          @clone="
-            onClone({
+          :value="inputFieldSet.ids"
+          @start="
+            log({
               ...$event,
+              group: `editor form ${formData.id}`,
               inputFieldSetIndex: index,
-              labelOrField: 'label',
             })
           "
-          @change="
+          @end="
             log({
               ...$event,
               group: `editor form ${formData.id}`,
@@ -35,13 +36,20 @@
             })
           "
         >
-          <!-- add data in list input to tell events apart -->
+          <!-- Wrap label/input in container containing two versions, the regular, and one only displayed when dragging -->
           <div
             v-for="(id, inputIndex) in inputFieldSet.ids"
             :key="id + 'label'"
-            :class="['label' + inputIndex]"
+            class="input-flex-container"
           >
-            {{ id }} label
+            <div :class="['only-when-not-dragging', 'label' + inputIndex]">
+              {{ id }} label
+            </div>
+
+            <div class="only-when-dragging">
+              <div :class="['label' + inputIndex]">{{ id }} label</div>
+              <div :class="['input' + inputIndex]">{{ id }} input</div>
+            </div>
           </div>
         </draggable>
         <draggable
@@ -51,26 +59,40 @@
           ]"
           ghost-class="ghost-drag-item"
           drag-class="drag-item"
+          :move="() => false"
           :group="`editor form ${formData.id}`"
           :disabled="!dragAndDropActive"
           direction="vertical"
           :sort="true"
           :list="inputFieldSet.ids"
-          @clone="
-            onClone({
+          @start="
+            log({
               ...$event,
+              group: `editor form ${formData.id}`,
               inputFieldSetIndex: index,
-              labelOrField: 'field',
             })
           "
-          @change="log"
+          @end="
+            log({
+              ...$event,
+              group: `editor form ${formData.id}`,
+              inputFieldSetIndex: index,
+            })
+          "
         >
           <div
             v-for="(id, inputIndex) in inputFieldSet.ids"
             :key="id + 'input'"
-            :class="['input' + inputIndex]"
+            :class="['input-flex-container', 'input' + inputIndex]"
           >
-            {{ id }} input
+            <div :class="['only-when-not-dragging', 'input' + inputIndex]">
+              {{ id }} input
+            </div>
+
+            <div class="only-when-dragging">
+              <div :class="['label' + inputIndex]">{{ id }} label</div>
+              <div :class="['input' + inputIndex]">{{ id }} input</div>
+            </div>
           </div>
         </draggable>
       </div>
@@ -88,12 +110,6 @@ export default {
   methods: {
     log: function (evt) {
       window.console.log(evt);
-    },
-    onClone: function (event) {
-      // eslint-disable-next-line no-debugger
-      debugger;
-      // need: refs to select sister DOM element label/field, to clone for in hand
-      window.console.log(event);
     },
   },
   props: {
@@ -142,5 +158,22 @@ fieldset {
 .input0,
 .input1 {
   background-color: yellow;
+}
+
+.ghost-drag-item {
+  opacity: 0.5;
+  /* display: none; */
+}
+
+.only-when-dragging {
+  display: none;
+}
+
+.drag-item .only-when-dragging {
+  display: block;
+}
+
+.drag-item .only-when-not-dragging {
+  display: none;
 }
 </style>
